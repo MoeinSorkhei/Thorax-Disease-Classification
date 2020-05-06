@@ -1,0 +1,19 @@
+{
+  "data_folder": "../data/extracted/images",
+  "download_path": "../data/archives",
+  "extracted_path": "../data/extracted",
+
+  "h5_file": "../data/chest_xray.h5",
+  "formatted_data_path": "../data/formatted_data.npy",
+  "train_val_path": "../data/train_val_list.txt",
+  "test_path": "../data/test_list.txt",
+
+  "batch_size": 128,
+  "shuffle": true,
+  "num_workers": 0,
+  "max_epochs": 1000,
+  "lr": 1e-3,
+
+  "pool_mode": "max",
+  "freezed": false
+}
