@@ -23,11 +23,6 @@ def load_resnet(freeze_params=False, verbose=False):
     resnet_model = models.resnet34(pretrained=True)
     resnet_model.train()  # put the model in the correct mode
 
-    # freeze the resnet
-    if freeze_params:
-        for param in resnet_model.parameters():  # freezing the parameters
-            param.requires_grad = False
-
     if verbose:
         print('ResNet summary before removing the last two layers')
         # print(resnet_model)
@@ -40,10 +35,57 @@ def load_resnet(freeze_params=False, verbose=False):
         print('ResNet summary after the last two layers')
         summary(resnet_model, input_size=(3, 256, 256))
 
+    # freeze the resnet
+    if freeze_params:
+        for param in resnet_model.parameters():  # freezing the parameters
+            param.requires_grad = False
+
     # helper.print_num_params(resnet_model)
     return resnet_model
+
+
+def load_vgg(freeze_params=False, verbose=False):
+    """
+    Loads the VGG-16 model with batch normalization.
+
+    :param freeze_params: whether to freeze the parameters of VGG-16 while training the unified model.
+    :param verbose: if True, model summaries will be printed after loading.
+    :return: the pretrained vgg-16 model.
+
+    Notes:
+        - Before removing the FC-layers, the model is massive (528 MB with 138 million parameters).
+          After removing them, it is instead 56 MB with 15 million params.
+          However, the forward/backward pass size is still quite big at 420 MB.
+
+        - For 256x256 images:
+            - Output shape of the forward pass is [512 x 8 x 8] excluding the batch size.
+
+        - It would be possible to also remove the MaxPool from the end. The output shape
+          would then become [512 x 16 x 16].
+    """
+    vgg_model = models.vgg16_bn(pretrained=True);
+
+    if verbose:
+        print('Summary of the full VGG-16 model.')
+        summary(vgg_model, input_size=(3, 256, 256))
+
+    # Removes the AvgPool and 3 fully connected layers from the end.
+    vgg_model = torch.nn.Sequential(*list(vgg_model.children())[:-2])
+
+    if verbose:
+        print('\nVGG-16 summary with fully connected layers removed.')
+        summary(vgg_model, input_size=(3, 256, 256))
+
+    if freeze_params:
+        for param in vgg_model.parameters():
+            param.requires_grad = False
+
+    return vgg_model
 
 
 def load_pre_trained_model(model_name, freezed):
     if model_name == 'resnet':
         return load_resnet(freeze_params=freezed)
+    
+    elif model_name == 'vgg':
+        return load_vgg(freeze_params=freezed)
