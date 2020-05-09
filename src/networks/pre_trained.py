@@ -86,8 +86,8 @@ def load_googlenet(freeze_params=False, verbose=False):
     """
 
     :param freeze_params: if True, parameters of the GoogLeNet will be frozen and do not contribute to gradient updates.
-    :param verbose: if True, the function prints model summaries before and after removing the two last layers.
-    :return: the pre-trained GoogLeNet model with the two last layers (pooling and fully connected) removed.
+    :param verbose: if True, the function prints model summaries before and after removing the three last layers.
+    :return: the pre-trained GoogLeNet model with the three last layers (pooling and fully connected) removed.
 
     Notes:
         - For 256x256 images:
