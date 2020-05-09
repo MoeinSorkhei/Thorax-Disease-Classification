@@ -82,6 +82,41 @@ def load_vgg(freeze_params=False, verbose=False):
 
     return vgg_model
 
+def load_googlenet(freeze_params=False, verbose=False):
+    """
+
+    :param freeze_params: if True, parameters of the GoogLeNet will be frozen and do not contribute to gradient updates.
+    :param verbose: if True, the function prints model summaries before and after removing the two last layers.
+    :return: the pre-trained GoogLeNet model with the two last layers (pooling and fully connected) removed.
+
+    Notes:
+        - For 256x256 images:
+            - Output shape of the forward pass is [1024 x 8 x 8] excluding the batch size for GoogLeNet.
+    """
+    
+    googlenet_model = models.googlenet(pretrained=True)
+    googlenet_model.train()  # put the model in the correct mode
+
+    if verbose:
+        print('GoogLeNet summary before removing the last three layers')
+        # print(googlenet_model)
+        summary(googlenet_model, input_size=(3, 256, 256))
+
+    # removing the last three layers: AdaptiveAvgPool2d, Dropout and Linear
+    googlenet_model = torch.nn.Sequential(*list(googlenet_model.children())[:-3])
+
+    if verbose:
+        print('GoogLeNet summary after the last three layers')
+        summary(googlenet_model, input_size=(3, 256, 256))
+
+    # freeze the GoogLeNet
+    if freeze_params:
+        for param in googlenet_model.parameters():  # freezing the parameters
+            param.requires_grad = False
+
+    # helper.print_num_params(googlenet_model)
+    return googlenet_model
+
 
 def load_pre_trained_model(model_name, freezed):
     if model_name == 'resnet':
@@ -89,3 +124,6 @@ def load_pre_trained_model(model_name, freezed):
     
     elif model_name == 'vgg':
         return load_vgg(freeze_params=freezed)
+    
+    elif model_name == 'googlenet':
+        return load_googlenet(freeze_params=freezed)

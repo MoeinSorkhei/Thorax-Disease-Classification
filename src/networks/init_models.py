@@ -12,6 +12,10 @@ def init_unified_net(model_name, params):
     elif model_name == 'vgg':
         transition_params['in_channels'] = 512
         transition_params['s'] = 8
+
+    elif model_name == 'googlenet':
+        transition_params['in_channels'] = 1024
+        transition_params['s'] = 8
     
     else:
         sys.exit(f'Error: Model name "{model_name}" not recognized.')
