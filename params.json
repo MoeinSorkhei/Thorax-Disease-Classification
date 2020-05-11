@@ -7,12 +7,13 @@
   "formatted_data_path": "../data/formatted_data.npy",
   "train_val_path": "../data/train_val_list.txt",
   "test_path": "../data/test_list.txt",
+  "checkpoints_path": "../checkpoints",
 
   "batch_size": 128,
   "shuffle": true,
   "num_workers": 0,
   "max_epochs": 1000,
-  "lr": 1e-3,
+  "lr": 1e-4,
 
   "pool_mode": "max",
   "freezed": false

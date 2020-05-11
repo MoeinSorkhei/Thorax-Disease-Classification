@@ -1,7 +1,9 @@
 import torch
 
+
+from globals import device
 # this device is accessible in all the functions in this file
-device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+# device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 
 def compute_wcel(fx, labels):

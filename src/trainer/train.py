@@ -2,9 +2,14 @@ import torch
 
 import data_handler, helper
 from . import loss
-
+from globals import device
 # this device is accessible in all the functions in this file
-device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+# device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+
+
+def track(loss_name, loss_value, args, tracker):
+    if args.use_comet:
+        tracker.track_metric(loss_name, loss_value)
 
 
 def train(args, params, model, optimizer, tracker=None):
@@ -36,20 +41,21 @@ def train(args, params, model, optimizer, tracker=None):
             pred = model(img_batch)
             train_loss = loss.compute_wcel(fx=pred, labels=label_batch)
             # if i_batch % 50 == 0:
-            print(f'Batch: {i_batch}, train loss: {round(train_loss.item(), 3)}')
+            print(f'Batch: {i_batch} - train loss: {round(train_loss.item(), 3)}')
 
             # tracking the metrics using comet in each iteration
-            if args.use_comet:
-                tracker.track_metric('train_loss', round(train_loss.item(), 3))
+            track('train_loss', round(train_loss.item(), 3), args, tracker)
 
             # backward and optimization step
             train_loss.backward()
             optimizer.step()
 
-        helper.save_model()  # save the model every epoch
+        # save checkpoint after epoch
+        save_path = helper.compute_paths(args, params)['save_path']
+        helper.make_dir_if_not_exists(save_path)
+        helper.save_model(save_path, epoch, model, optimizer, train_loss)  # save the model every epoch
+
         val_loss = loss.compute_val_loss(model, val_loader)  # track val loss
-        if args.use_comet:
-            tracker.track_metric('val_loss', val_loss)
+        print(f'In [train]: epoch={epoch} - val_loss = {val_loss}')
+        track('val_loss', val_loss, args, tracker)
         epoch += 1
-
-

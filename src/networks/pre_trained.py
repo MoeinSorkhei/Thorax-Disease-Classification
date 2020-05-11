@@ -82,6 +82,7 @@ def load_vgg(freeze_params=False, verbose=False):
 
     return vgg_model
 
+
 def load_googlenet(freeze_params=False, verbose=False):
     """
 

@@ -81,7 +81,7 @@ def init_data_loaders(params, loader_params):
                                    shuffle=shuffle, num_workers=num_workers)
     # creating the validation data loader
     val_set = Dataset(partition['validation'], labels, labels_hot, data_folder)
-    val_loader = data.DataLoader(dataset=val_set, batch_size=batch_size,
+    val_loader = data.DataLoader(dataset=val_set, batch_size=64,
                                  shuffle=False, num_workers=num_workers)
 
     # creating the test data loader

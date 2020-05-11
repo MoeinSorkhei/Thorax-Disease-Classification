@@ -1,6 +1,9 @@
 from .unified import UnifiedNetwork
+import helper
+from globals import device
 
 import sys
+
 
 def init_unified_net(model_name, params):
     transition_params = {'pool_mode': params['pool_mode']}
@@ -20,4 +23,8 @@ def init_unified_net(model_name, params):
     else:
         sys.exit(f'Error: Model name "{model_name}" not recognized.')
 
-    return UnifiedNetwork(model_name, transition_params, params['freezed'])
+    net = UnifiedNetwork(model_name, transition_params, params['freezed'])
+
+    print(f'In [init_unified_net]: initialized model with {model_name} - freezed={params["freezed"]}')
+    helper.print_num_params(net)
+    return net.to(device)
