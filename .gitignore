@@ -26,6 +26,7 @@ data/
 tmp/
 checkpoints/
 scripts/
+results/
 
 commit_msg.txt
 notes.txt

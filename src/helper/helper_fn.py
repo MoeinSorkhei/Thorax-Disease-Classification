@@ -25,6 +25,10 @@ def print_num_params(model):
 def scientific(float_num):
     if float_num == 1e-5:
         return '1e-5'
+    if float_num == 2e-5:
+        return '2e-5'
+    if float_num == 2e-6:
+        return '2e-6'
     elif float_num == 5e-5:
         return '5e-5'
     elif float_num == 1e-4:
@@ -35,8 +39,9 @@ def scientific(float_num):
 
 
 def compute_paths(args, params):
-    save_path = f"{params['checkpoints_path']}/model={args.model}/freezed={params['freezed']}"
-    paths = {'save_path': save_path}
+    save_path = f"{params['checkpoints_path']}/model={args.model}/freezed={params['freezed']}/lr={scientific(params['lr'])}"
+    results_path = f"{params['results_path']}/model={args.model}/freezed={params['freezed']}/lr={scientific(params['lr'])}"
+    paths = {'save_path': save_path, 'results_path': results_path}
     return paths
 
 
