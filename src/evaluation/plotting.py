@@ -27,7 +27,7 @@ def plot_roc(prediction, target, class_names, path_to_save):
     auc_list = list()
     for i in range(n_classes):
         plt.plot(false_positive_rate[i], true_positive_rate[i], label=' {} '.format(class_names[i]))
-        auc_list.append("class {0}, AUC = {1:0.2f}".format(class_names[i], roc_auc[i]))
+        auc_list.append("class {0}, AUC = {1:0.4f}".format(class_names[i], roc_auc[i]))
 
     plt.plot([0, 1], [0, 1], 'k--')
     plt.xlim([0.0, 1.0])
