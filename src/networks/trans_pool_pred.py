@@ -36,14 +36,24 @@ class TransPoolPred(nn.Module):
             avg_val = F.avg_pool2d(inp, kernel_size=(height, width)).squeeze(dim=3).squeeze(dim=2)
             return (max_val + avg_val) / 2
 
-    def forward(self, inp):
+    def forward(self, inp, return_cam=False):
         """
         The forward pass of the transition layer, for either classification or generation of heat-maps.
+        :param return_cam: if True, only returns class activation maps (used for heat-map generation).
         :param inp:
         :return:
+        Notes:
+            - For a linear layer which in_features=512, out_features=14, the weight shape is (14, 512).
         """
-        trans_out = self.transition(inp)
+        trans_out = self.transition(inp)  # e.g. shape (512, 8, 8)
         pool_out = self.global_pool(trans_out)
         pred_out = self.prediction(pool_out)
         sigmoid_out = self.sigmoid(pred_out)
+
+        if return_cam:
+            depth = trans_out.shape[0]  # e.g. (512, 8, 8)
+            cam = [torch.einsum(("ab, bcd ->acd"), (self.prediction.weight.data, inp[i])).unsqueeze(dim=0)
+                   for i in range(depth)]
+            cam = torch.cat(cam)  # convert to tensor
+            return cam  # shape e.g, (B, 14, 8, 8) - B: batch size, 14 classes, 8x8 spatial dimension
         return sigmoid_out

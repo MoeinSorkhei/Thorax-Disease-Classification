@@ -18,7 +18,12 @@ class UnifiedNetwork(torch.nn.Module):
         self.pre_trained_model = load_pre_trained_model(model_name, freezed)
         self.trans_pool_pred = TransPoolPred(**transition_params)
 
-    def forward(self, inp):
+    def forward(self, inp, return_cam=False):
+        """
+        :param inp:
+        :param return_cam: if True, only returns class activation maps (used for heat-map generation).
+        :return:
+        """
         model_out = self.pre_trained_model(inp)
-        prediction = self.trans_pool_pred(model_out)
+        prediction = self.trans_pool_pred(model_out, return_cam=return_cam)
         return prediction
