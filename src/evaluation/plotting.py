@@ -1,6 +1,6 @@
 from sklearn.metrics import roc_curve, auc
 import matplotlib.pyplot as plt
-
+import matplotlib.patches as patches
 
 def plot_roc(prediction, target, class_names, path_to_save):
     """
@@ -45,3 +45,46 @@ def plot_roc(prediction, target, class_names, path_to_save):
 
     print('In [plot_roc]: done')
 
+
+def plot_bbox(img, predicted=None, false_pos=None, ground_truth=None, heatmap=None):
+    """
+    Plots the predicted and/or real bounding box on top of the x-ray image.
+    If heatmap is given, also plot it in a separate subplot.
+    
+    :param img: the x-ray Image to use as background.
+    :param predicted: the predicted BBox. (green)
+    :param false_pos: predicted BBox using lower threshold. (red)
+    :param ground_truth: the real BBox. (blue)
+    :param heatmap: heatmap that was used to generate predicted BBox.
+    """
+    # If no heatmap, just create a single subplot.
+    if heatmap is None:
+        fig, ax1 = plt.subplots(1, 1);
+
+    # If given, plot heatmap in second subplot.
+    else :
+        fig, (ax1, ax2) = plt.subplots(1, 2);
+        extent = (0, 1, 0, 1)
+        ax2.imshow(img, extent=extent, cmap='gray')
+        ax2.imshow(heatmap, extent=extent, cmap='jet', alpha=0.6)
+        ax2.axis('off')
+
+    # Plot x-ray image beneath bboxes.
+    ax1.imshow(img, cmap='gray')
+    ax1.axis('off')
+
+    # Ordered so ground truth bbox is drawn below predicted.
+    bboxes = [ground_truth, false_pos, predicted]
+    colors = ['b', 'r', 'g']
+
+    # Plot all given bboxes.
+    for i, box in enumerate(bboxes):
+        if box is not None:
+            ax1.add_patch(patches.Rectangle(
+                (box.x, box.y), box.width, box.height,
+                fill=False,
+                edgecolor=colors[i]
+            ))
+
+    plt.tight_layout()
+    plt.show()
