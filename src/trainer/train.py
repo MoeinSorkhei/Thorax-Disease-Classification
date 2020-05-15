@@ -49,6 +49,7 @@ def train(args, params, model, optimizer, tracker=None):
             # backward and optimization step
             train_loss.backward()
             optimizer.step()
+            torch.cuda.empty_cache()
 
         # save checkpoint after epoch
         save_path = helper.compute_paths(args, params)['save_path']

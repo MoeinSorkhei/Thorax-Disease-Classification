@@ -63,7 +63,8 @@ def load_vgg(freeze_params=False, verbose=False):
         - It would be possible to also remove the MaxPool from the end. The output shape
           would then become [512 x 16 x 16].
     """
-    vgg_model = models.vgg16_bn(pretrained=True);
+    vgg_model = models.vgg16_bn(pretrained=True)
+    vgg_model.train()
 
     if verbose:
         print('Summary of the full VGG-16 model.')
