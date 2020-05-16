@@ -46,14 +46,13 @@ def plot_roc(prediction, target, class_names, path_to_save):
     print('In [plot_roc]: done')
 
 
-def plot_bbox(img, predicted=None, false_pos=None, ground_truth=None, heatmap=None):
+def plot_bbox(img, predicted=None, ground_truth=None, heatmap=None):
     """
     Plots the predicted and/or real bounding box on top of the x-ray image.
     If heatmap is given, also plot it in a separate subplot.
     
     :param img: the x-ray Image to use as background.
-    :param predicted: the predicted BBox. (green)
-    :param false_pos: predicted BBox using lower threshold. (red)
+    :param predicted: an array of predicted BBoxes. (green)
     :param ground_truth: the real BBox. (blue)
     :param heatmap: heatmap that was used to generate predicted BBox.
     """
@@ -74,8 +73,8 @@ def plot_bbox(img, predicted=None, false_pos=None, ground_truth=None, heatmap=No
     ax1.axis('off')
 
     # Ordered so ground truth bbox is drawn below predicted.
-    bboxes = [ground_truth, false_pos, predicted]
-    colors = ['b', 'r', 'g']
+    bboxes = [ground_truth] + predicted
+    colors = ['b'] + ['g'] * len(predicted)
 
     # Plot all given bboxes.
     for i, box in enumerate(bboxes):

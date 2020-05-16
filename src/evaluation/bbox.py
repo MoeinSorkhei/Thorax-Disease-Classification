@@ -84,7 +84,7 @@ def bbox_from_point(bin_img, x, y):
     Generates a BBox by starting at (x,y) and traversing the binary img, finding
     all connected 1's.
 
-    :param bin_img: a binary 2D array.
+    :param bin_img: a binary 2D array. Will be altered by the function.
     :param x: starting x.
     :param y: starting y.
     :return: a BBox fully covering the area of 1's connected to (x,y) in bin_img.
@@ -101,9 +101,11 @@ def bbox_from_point(bin_img, x, y):
     while not q.empty():
         yx = q.get()
 
-        # Don't process this position if already visited or corresponds to 0 in img.
-        if visited[yx] or bin_img[yx] == 0:
+        # Don't process this position if corresponds to 0 in img.
+        if bin_img[yx] == 0:
             continue
+        
+        bin_img[yx] = 0 # Alter the binary image.
         visited[yx] = True
 
         # For every direction, check that new position is valid and add to queue.
@@ -155,7 +157,7 @@ def evaluate_iobb(args, params, img_name=None, img_disease=None):
     reader = csv.reader(f)
     rows = list(reader)[1:]  # ignoring the first row because it is the titles
 
-    # A list of tuples (img_name, disease_index, iobb)
+    # A list of tuples (img_name, disease_index, iobb, num_bboxes)
     results = []
 
     for i, img_data in enumerate(rows):
@@ -196,11 +198,11 @@ def evaluate_iobb(args, params, img_name=None, img_disease=None):
 
         # Save results if evaluating all images, not just plotting one.
         if img_name is None:
-            iobb = evaluate_single_bbox(ground_truth, heatmap, iobb=True)
-            results.append((img_data[0], disease, iobb))
-            print(f'{i:} {iobb}')
+            iobb, num = evaluate_single_bbox(ground_truth, heatmap, iobb=True)
+            results.append((img_data[0], disease, iobb, num))
+            print(f'#{i}, n:{num}, {iobb}')
         else:
-            iobb = evaluate_single_bbox(ground_truth, heatmap, iobb=True, xray_img=xray_img)
+            iobb, _ = evaluate_single_bbox(ground_truth, heatmap, iobb=True, xray_img=xray_img)
             print(f'iobb: {iobb}')
             break
 
@@ -212,12 +214,12 @@ def evaluate_iobb(args, params, img_name=None, img_disease=None):
         results = np.array(results)
 
         # Save as numpy array.
-        np.save('../data/iobb.npy', results)
+        np.save(f'../data/iou_blob_{args.model}.npy', results)
 
         # Save as txt
-        with open('../data/iobb.txt', 'w') as txt:
+        with open(f'../data/iou_blob_{args.model}.txt', 'w') as txt:
             for i in range(results.shape[0]):
-                txt.write(f'{float(results[i][2])}, {int(results[i][1])}, {results[i][0]}\n')
+                txt.write(f'{float(results[i][2])}, {int(results[i][1])}, {int(results[i][3])}, {results[i][0]}\n')
 
     f.close() # Close csv file.
 
@@ -228,7 +230,7 @@ def evaluate_single_bbox(ground_truth, heatmap, iobb=True, xray_img=None):
     :param heatmap: the 8x8 heatmap numpy array.
     :param iobb: if True use IoBB, otherwise use IoU.
     :param xray_img: the x-ray image. If given, it will plot the bboxes and the heatmap.
-    :return: the IoBB or IoU metric.
+    :return: the IoBB or IoU metric, and the amount of bboxes found.
     """
     do_plot = xray_img is not None
 
@@ -238,35 +240,35 @@ def evaluate_single_bbox(ground_truth, heatmap, iobb=True, xray_img=None):
 
     # Resize heatmap to 256x256.
     heatmap = cv2.resize(heatmap, (256, 256), interpolation=cv2.INTER_CUBIC)
-
-    # Find maximum peak coordinate in heatmap.
-    peak = np.unravel_index(heatmap.argmax(), heatmap.shape)
     
-    # Only calculate 'red' bbox when plotting, not when just getting IoBB.
-    if do_plot:
-        thresholds = [180, 60]
-    else:
-        thresholds = [180]
+    bboxes = []
+    threshold = 180
 
-    bboxes = [None, None]
+    # Threshold heatmap and make it binary.
+    bin_heatmap = np.where(heatmap >= threshold, 1, 0)
+    x, y = 0, 0
 
-    # For every threshold, generate a single bbox.
-    for i in range(len(thresholds)):
-        # Threshold heatmap and make it binary.
-        bin_heatmap = np.where(heatmap >= thresholds[i], 1, 0)
-        
-        # Generate bbox covering peak in heatmap.
-        bboxes[i] = bbox_from_point(bin_heatmap, peak[1], peak[0])
-        
-        # Scale bbox from 256x256 to 1024x1024 to compare with ground truth.
-        bboxes[i].scale(4)
+    # Traverse through the binary map and make a bbox out of every blob of ones.
+    while x < 256 and y < 256:
+        if bin_heatmap[y, x] == 1:
+            # Generate bbox starting from current (x, y).
+            bboxes.append( bbox_from_point(bin_heatmap, x, y))
+            
+            # Scale bbox from 256x256 to 1024x1024 to compare with ground truth.
+            bboxes[-1].scale(4)
+
+        x += 1
+        if x >= 256:
+            x = 0
+            y += 1
 
     # Plot the bboxes and heatmap if the x-ray image is given.
     if do_plot:
-        plotting.plot_bbox(xray_img, bboxes[0], bboxes[1], ground_truth, heatmap=heatmap)
+        plotting.plot_bbox(xray_img, bboxes, ground_truth, heatmap=heatmap)
 
-    # Return the IoBB or IoU.
-    if iobb:
-        return bboxes[0].IoBB(ground_truth)
-    else:
-        return bboxes[0].IoU(ground_truth)
+    # Return the maximum IoBB.
+    score = np.empty(len(bboxes))
+    for i in range(len(bboxes)):
+        score[i] = bboxes[i].IoU(ground_truth)
+
+    return score.max(), len(bboxes)
