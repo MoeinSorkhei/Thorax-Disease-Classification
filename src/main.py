@@ -17,11 +17,15 @@ def read_params_and_args():
     parser.add_argument('--prev_exp_id', type=str)  # previous Comet experiment id
 
     parser.add_argument('--eval', action='store_true')
+    parser.add_argument('--eval_bbox', action='store_true')
     parser.add_argument('--epoch', type=int)
 
     parser.add_argument('--data_folder', type=str)
     parser.add_argument('--checkpoints_path', type=str)
     parser.add_argument('--results_path', type=str)
+
+    parser.add_argument('--bbox_image', type=str)   # Used to plot bbox and heatmap of single image.
+    parser.add_argument('--bbox_disease', type=int) # The disease to create bbox for, if not given, will use first disease in csv file.
 
     parser.add_argument('--model', type=str)
     parser.add_argument('--lr', type=float)
@@ -63,6 +67,9 @@ def main():
     # evaluation
     elif args.eval:
         evaluation.evaluate_model(args, params)
+
+    elif args.eval_bbox:
+        evaluation.evaluate_iobb(args, params, args.bbox_image, args.bbox_disease)
 
     else:
         model = networks.init_unified_net(args.model, params)
